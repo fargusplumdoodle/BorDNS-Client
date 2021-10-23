@@ -29,7 +29,8 @@ class FrostedGlassBox extends StatelessWidget {
                 sigmaX: 7.0,
                 sigmaY: 7.0,
               ),
-              child: Container(width: width, height: height, child: Text(" ")),
+              child: SizedBox(
+                  width: width, height: height, child: const Text(" ")),
             ),
             Opacity(
                 opacity: 0.02,

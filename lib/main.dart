@@ -1,3 +1,4 @@
+import 'package:bordns_client/api.dart';
 import 'package:flutter/material.dart';
 
 import 'ui/ui.dart';
@@ -52,7 +53,19 @@ class _MyHomePageState extends State<MyHomePage> {
         child: FrostedGlassBox(
             height: 200,
             width: 500,
-            child: Center(child: Text("Ah: $_counter"))),
+            child: Center(
+                child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton(
+                    onPressed: () async {
+                      final api = BorDnsAPI();
+                      api.list();
+                    },
+                    child: const Text("Make API call")),
+                Text("Ah: $_counter"),
+              ],
+            ))),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _incrementCounter,
