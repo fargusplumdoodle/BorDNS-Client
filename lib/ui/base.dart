@@ -58,7 +58,7 @@ class Body extends StatelessWidget {
   }
 }
 
-class TestScaffold {
+class Screen {
   Widget body;
   BuildContext context;
 
@@ -71,7 +71,7 @@ class TestScaffold {
   Menu? menu;
   double menuWidthPercent = 0.2;
 
-  TestScaffold({
+  Screen({
     required this.body,
     required this.context,
     Key? key,
@@ -124,4 +124,20 @@ class TestScaffold {
     }
     return null;
   }
+}
+
+class Header extends Text {
+  const Header(String data, {Key? key})
+      : super(data,
+            key: key,
+            textAlign: TextAlign.start,
+            style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold));
+}
+
+class PText extends Text {
+  const PText(String data, {Key? key})
+      : super(data,
+            key: key,
+            textAlign: TextAlign.start,
+            style: const TextStyle(fontSize: 20));
 }

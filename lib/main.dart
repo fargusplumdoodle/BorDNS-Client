@@ -1,4 +1,5 @@
 import 'package:bordns_client/api.dart';
+import 'package:bordns_client/screens/list.dart';
 import 'package:flutter/material.dart';
 
 import 'ui/ui.dart';
@@ -14,17 +15,16 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        brightness: Brightness.light,
-        primarySwatch: Colors.blue,
-      ),
-      darkTheme: ThemeData(
-        brightness: Brightness.dark,
-      ),
-      themeMode: ThemeMode.dark,
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
-    );
+        title: 'Flutter Demo',
+        theme: ThemeData(
+          brightness: Brightness.light,
+          primarySwatch: Colors.blue,
+        ),
+        darkTheme: ThemeData(
+          brightness: Brightness.dark,
+        ),
+        themeMode: ThemeMode.dark,
+        home: const ZonesOverview());
   }
 }
 
@@ -47,7 +47,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return TestScaffold(
+    return Screen(
       context: context,
       body: Center(
         child: FrostedGlassBox(

@@ -19,7 +19,7 @@ class APIException {
       required this.endpoint,
       required this.response,
       this.qs}) {
-    developer.log(message, error: {
+    developer.log(message, level: 0, error: {
       "status": response.statusCode,
       "body": response.body,
       "method": method,
@@ -55,6 +55,12 @@ abstract class API {
           qs: qs,
           response: r);
     }
+    developer.log("get", error: {
+      "status": r.statusCode,
+      "body": r.body,
+      "qs": qs,
+      "endpoint": endpoint
+    });
     return jsonDecode(r.body);
   }
 }

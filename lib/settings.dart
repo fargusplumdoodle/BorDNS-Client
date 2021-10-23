@@ -31,10 +31,6 @@ class Settings {
 }
 
 final routes = {
-  "DASHBOARD": "digg",
-  "TRANSACTIONS": "ah",
-  "TRANSFER FUNDS": "donmatt",
-  "ADD TRANSACTION": "ey",
-  "TAGS": "no",
-  "BUDGET PERCENTAGES": "ah",
+  "OVERVIEW": "tmp",
+  "ADD": "ah",
 };
