@@ -1,3 +1,4 @@
+import 'package:bordns_client/ui/forms.dart';
 import 'package:bordns_client/ui/ui.dart';
 import 'package:flutter/material.dart';
 
@@ -12,7 +13,7 @@ class ZonesOverview extends StatefulWidget {
   _ZonesOverviewState createState() => _ZonesOverviewState();
 }
 
-class _ZonesOverviewState extends State<ZonesOverview> {
+class _ZonesOverviewState extends State<ZonesOverview> with DomainDetail {
   bool loading = false;
   late Future<List<Zone>> zones;
 
@@ -37,7 +38,10 @@ class _ZonesOverviewState extends State<ZonesOverview> {
         future: zones,
         builder: (BuildContext context, AsyncSnapshot<List<Zone>> snapshot) {
           if (snapshot.hasData) {
-            return ListZones(zones: snapshot.data!);
+            return ListZones(
+              zones: snapshot.data!,
+              detailCallback: super.showDetailCallback,
+            );
           } else if (snapshot.hasError) {
             // TODO: GLOBAL ERRORS PLACE FOR ERRORS AND ERRORS
             return Center(child: Text(snapshot.error.toString()));
@@ -50,15 +54,15 @@ class _ZonesOverviewState extends State<ZonesOverview> {
 
 class ListZones extends StatefulWidget {
   final List<Zone> zones;
-  const ListZones({Key? key, required this.zones}) : super(key: key);
+  final DetailCallback detailCallback;
+  const ListZones({Key? key, required this.zones, required this.detailCallback})
+      : super(key: key);
 
   @override
   State<ListZones> createState() => _ListZonesState();
 }
 
 class _ListZonesState extends State<ListZones> {
-  bool isEditingOnMobile = false;
-
   @override
   Widget build(BuildContext context) {
     List<Widget> widgets = [];
@@ -74,19 +78,17 @@ class _ListZonesState extends State<ListZones> {
   }
 
   List<Widget> _buildDomainList(BuildContext context, List<Domain> domains) {
-    final width = MediaQuery.of(context).size.width * 0.9;
-    const height = 70.0;
     List<Widget> widgets = [];
     for (var domain in domains) {
       widgets.add(Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
         child: GestureDetector(
           onTap: () {
-            showDetail(context, domain);
+            widget.detailCallback(context, domain);
           },
           child: FrostedGlassBox(
-              width: width,
-              height: height,
+              width: BoxSize.varWidth(context, base: 0.9),
+              height: 70.0,
               child: Center(
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
@@ -105,49 +107,74 @@ class _ListZonesState extends State<ListZones> {
     }
     return widgets;
   }
+}
 
-  void isEditingOnMobileCallback() {
-    print("setting that darn state");
-    setState(() {
-      isEditingOnMobile = true;
-    });
+typedef DetailCallback = void Function(BuildContext context, Domain domain);
+typedef DomainCallback = void Function(Domain domain);
+
+mixin DomainDetail on State<ZonesOverview> {
+  void submitCallback(Domain domain) {
+    // TODO
+    print('submitted');
+    print(domain.fqdn);
+    print(domain.ip);
   }
 
-  void showDetail(BuildContext context, Domain domain) {
+  void deleteCallback(Domain domain) {
+    // TODO
+  }
+
+  void showDetailCallback(BuildContext context, Domain domain) {
+    if (Settings.env == Environments.desktop) {
+      showDetailDesktop(context, domain);
+    } else {
+      showDetailMobile(context, domain);
+    }
+  }
+
+  void showDetailDesktop(BuildContext context, Domain domain) {
     showModalBottomSheet(
         context: context,
         builder: (BuildContext context) {
-          final size = MediaQuery.of(context).size;
-          final height = getModalHeight(size);
-          return Container(
-              color: Colors.black12,
-              height: height,
-              width: size.width,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: DomainForm(
-                  domain,
-                  isEditingCallback: isEditingOnMobileCallback,
-                ),
-              ));
+          return SizedBox(
+            height: BoxSize.varHeight(context, desktop: 0.3),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: DomainForm(
+                domain,
+                submitCallback: submitCallback,
+                deleteCallback: deleteCallback,
+              ),
+            ),
+          );
         });
   }
 
-  double getModalHeight(Size screenSize) {
-    if (Settings.env == Environments.desktop) {
-      return screenSize.height * 0.3;
-    }
-    if (isEditingOnMobile) {
-      return screenSize.height * 0.8;
-    }
-    return screenSize.height * 0.3;
+  void showDetailMobile(BuildContext context, Domain domain) {
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            content: SizedBox(
+              height: 190,
+              child: DomainForm(
+                domain,
+                submitCallback: submitCallback,
+                deleteCallback: deleteCallback,
+              ),
+            ),
+          );
+        });
   }
 }
 
 class DomainForm extends StatefulWidget {
-  Domain domain;
-  VoidFunc? isEditingCallback;
-  DomainForm(this.domain, {Key? key, this.isEditingCallback}) : super(key: key);
+  final Domain domain;
+  final DomainCallback submitCallback;
+  final DomainCallback deleteCallback;
+  const DomainForm(this.domain,
+      {Key? key, required this.submitCallback, required this.deleteCallback})
+      : super(key: key);
 
   @override
   _DomainFormState createState() => _DomainFormState();
@@ -156,71 +183,51 @@ class DomainForm extends StatefulWidget {
 class _DomainFormState extends State<DomainForm> {
   final _formKey = GlobalKey<FormState>();
 
-  double getFormItemsWidth(Size size) {
-    if (Settings.env == Environments.desktop) {
-      return size.width * 0.5;
-    }
-    return size.width * 0.7;
-  }
-
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-    final width = getFormItemsWidth(size);
-    return SizedBox(
-      width: width,
-      height: size.height,
-      child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
+    return Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            SizedBox(
+              width: BoxSize.varWidth(context, desktop: 0.5, mobile: 0.7),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  TextFormField(
-                    decoration: const InputDecoration(labelText: "Domain"),
-                    keyboardType: TextInputType.text,
-                    initialValue: widget.domain.fqdn,
-                    onTap: widget.isEditingCallback,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Invalid Domain';
-                      }
-                      return null;
-                    },
-                    onSaved: (value) {
-                      setState(() {
-                        widget.domain.fqdn = value!;
-                      });
-                    },
-                  ),
-                  TextFormField(
-                    decoration: const InputDecoration(labelText: "IP Address"),
-                    keyboardType: TextInputType.text,
-                    onTap: widget.isEditingCallback,
-                    initialValue: widget.domain.ip,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Invalid IP Address';
-                      }
-                      return null;
-                    },
-                    onSaved: (value) {
-                      setState(() {
-                        widget.domain.ip = value!;
-                      });
-                    },
-                  ),
+                  DomainFormField(
+                      initialValue: widget.domain.fqdn,
+                      onSaved: (value) {
+                        setState(() {
+                          widget.domain.fqdn = value!;
+                        });
+                      }),
+                  IPFormField(
+                      initialValue: widget.domain.ip,
+                      onSaved: (value) {
+                        setState(() {
+                          widget.domain.ip = value!;
+                        });
+                      }),
                 ],
               ),
-              Row(
-                children: [
-                  ElevatedButton(onPressed: () {}, child: Text('Delete')),
-                  ElevatedButton(onPressed: () {}, child: Text('Submit')),
-                ],
-              ),
-            ],
-          )),
-    );
+            ),
+            Row(
+              children: [
+                ElevatedButton(
+                    onPressed: () {
+                      widget.submitCallback(widget.domain);
+                    },
+                    child: const Text('Submit')),
+                ElevatedButton(
+                    onPressed: () {
+                      widget.deleteCallback(widget.domain);
+                    },
+                    child: const Text('Delete')),
+              ],
+            ),
+          ],
+        ));
   }
 }

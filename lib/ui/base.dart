@@ -143,3 +143,56 @@ class PText extends Text {
 }
 
 typedef VoidFunc = void Function();
+
+class BoxSize {
+  static double _getModifier({double? base, double? desktop, double? mobile}) {
+    if (desktop == null && mobile == null && base == null) {
+      return 1.0;
+    }
+    if (base != null) {
+      return base;
+    }
+    if (Settings.env == Environments.desktop) {
+      if (desktop == null) {
+        return 1;
+      }
+      return desktop;
+    } else {
+      if (mobile == null) {
+        return 1;
+      }
+      return mobile;
+    }
+  }
+
+  static double varHeight(BuildContext context,
+      {double? base, double? desktop, double? mobile}) {
+    final size = MediaQuery.of(context).size;
+    return size.height *
+        _getModifier(
+          base: base,
+          desktop: desktop,
+          mobile: mobile,
+        );
+  }
+
+  static double varWidth(BuildContext context,
+      {double? base, double? desktop, double? mobile}) {
+    final size = MediaQuery.of(context).size;
+    return size.width *
+        _getModifier(
+          base: base,
+          desktop: desktop,
+          mobile: mobile,
+        );
+  }
+
+  static double staticVal({double? base, double? desktop, double? mobile}) {
+    assert(base != null || desktop != null || mobile != null);
+    return _getModifier(
+      base: base,
+      desktop: desktop,
+      mobile: mobile,
+    );
+  }
+}
