@@ -10,13 +10,14 @@ dependencies:
   flutter:
     sdk: flutter
   fluttertoast: ^8.0.8
+  ubuntu_font_flutter: ^0.0.1
+  http: ^0.13.4
 
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^1.0.0
-  http: ^0.13.4
 
 flutter:
   uses-material-design: true
@@ -25,9 +26,24 @@ flutter:
     - assets/desktop/
     - assets/mobile/
 
-  # fonts:
-  #   - family: Schyler
-  #     fonts:
-  #       - asset: fonts/Schyler-Regular.ttf
-  #       - asset: fonts/Schyler-Italic.ttf
-  #         style: italic
+  fonts:
+    - family: Ubuntu
+      fonts:
+        - asset: packages/ubuntu_font_flutter/Ubuntu-R.ttf
+        - asset: packages/ubuntu_font_flutter/Ubuntu-RI.ttf
+          style: italic
+        - asset: packages/ubuntu_font_flutter/Ubuntu-B.ttf
+          weight: 700
+        - asset: packages/ubuntu_font_flutter/Ubuntu-BI.ttf
+          weight: 700
+          style: italic
+        - asset: packages/ubuntu_font_flutter/Ubuntu-L.ttf
+          weight: 300
+        - asset: packages/ubuntu_font_flutter/Ubuntu-LI.ttf
+          weight: 300
+          style: italic
+        - asset: packages/ubuntu_font_flutter/Ubuntu-M.ttf
+          weight: 500
+        - asset: packages/ubuntu_font_flutter/Ubuntu-MI.ttf
+          weight: 500
+          style: italic

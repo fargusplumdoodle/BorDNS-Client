@@ -141,3 +141,5 @@ class PText extends Text {
             textAlign: TextAlign.start,
             style: const TextStyle(fontSize: 20));
 }
+
+typedef VoidFunc = void Function();

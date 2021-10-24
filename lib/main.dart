@@ -19,9 +19,11 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
           brightness: Brightness.light,
           primarySwatch: Colors.blue,
+          fontFamily: 'Ubuntu',
         ),
         darkTheme: ThemeData(
           brightness: Brightness.dark,
+          fontFamily: 'Ubuntu',
         ),
         themeMode: ThemeMode.dark,
         home: const ZonesOverview());
