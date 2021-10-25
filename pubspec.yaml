@@ -9,9 +9,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  fluttertoast: ^8.0.8
   ubuntu_font_flutter: ^0.0.1
   http: ^0.13.4
+  shimmer: ^2.0.0
 
 
 dev_dependencies:

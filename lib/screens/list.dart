@@ -215,15 +215,17 @@ class _DomainFormState extends State<DomainForm> {
             ),
             Row(
               children: [
-                ElevatedButton(
-                    onPressed: () {
+                GlassButton(
+                    onTap: () {
                       widget.submitCallback(widget.domain);
                     },
                     child: const Text('Submit')),
-                ElevatedButton(
-                    onPressed: () {
+                const Padding(padding: EdgeInsets.all(8.0)),
+                GlassButton(
+                    onTap: () {
                       widget.deleteCallback(widget.domain);
                     },
+                    red: true,
                     child: const Text('Delete')),
               ],
             ),

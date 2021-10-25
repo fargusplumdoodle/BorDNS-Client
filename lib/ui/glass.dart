@@ -70,3 +70,67 @@ class FrostedGlassBox extends StatelessWidget {
     );
   }
 }
+
+class GlassButton extends StatefulWidget {
+  final VoidCallback onTap;
+  final Widget child;
+  final bool red;
+
+  const GlassButton({
+    Key? key,
+    required this.child,
+    required this.onTap,
+    this.red = false,
+  }) : super(key: key);
+
+  @override
+  State<GlassButton> createState() => _GlassButtonState();
+}
+
+class _GlassButtonState extends State<GlassButton> {
+  bool _pressed = false;
+
+  void _onTap() {
+    setState(() {
+      _pressed = true;
+    });
+    widget.onTap();
+    Future.delayed(const Duration(milliseconds: 300)).then((value) => {
+          setState(() {
+            _pressed = false;
+          })
+        });
+  }
+
+  ImageProvider _getBackgroundImage() {
+    if (widget.red) {
+      return Image.asset(img('red-gradient.png')).image;
+    }
+    return Image.asset(img('background.png')).image;
+  }
+
+  Widget _getChild() {
+    if (_pressed) {
+      return Opacity(
+        opacity: 0.5,
+        child: widget.child,
+      );
+    }
+    return widget.child;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+        onTap: _onTap,
+        child: Container(
+            decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10.0),
+                image: DecorationImage(
+                    image: _getBackgroundImage(), fit: BoxFit.cover)),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: _getChild(),
+            )));
+  }
+}
