@@ -110,18 +110,19 @@ class _ListZonesState extends State<ListZones> {
 }
 
 typedef DetailCallback = void Function(BuildContext context, Domain domain);
-typedef DomainCallback = void Function(Domain domain);
+typedef DomainCallback = Future<void> Function(Domain domain);
+typedef DeleteCallback = Future<bool> Function(Domain domain);
 
 mixin DomainDetail on State<ZonesOverview> {
-  void submitCallback(Domain domain) {
-    // TODO
-    print('submitted');
-    print(domain.fqdn);
-    print(domain.ip);
+  Future<void> submitCallback(Domain domain) async {
+    BorDnsAPI().set(domain);
   }
 
-  void deleteCallback(Domain domain) {
-    // TODO
+  Future<bool> deleteCallback(Domain domain) async {
+    print('waiting');
+    await Future.delayed(const Duration(seconds: 3));
+    print('done');
+    return true;
   }
 
   void showDetailCallback(BuildContext context, Domain domain) {
@@ -140,11 +141,7 @@ mixin DomainDetail on State<ZonesOverview> {
             height: BoxSize.varHeight(context, desktop: 0.3),
             child: Padding(
               padding: const EdgeInsets.all(16.0),
-              child: DomainForm(
-                domain,
-                submitCallback: submitCallback,
-                deleteCallback: deleteCallback,
-              ),
+              child: _buildForm(domain),
             ),
           );
         });
@@ -157,21 +154,25 @@ mixin DomainDetail on State<ZonesOverview> {
           return AlertDialog(
             content: SizedBox(
               height: 190,
-              child: DomainForm(
-                domain,
-                submitCallback: submitCallback,
-                deleteCallback: deleteCallback,
-              ),
+              child: _buildForm(domain),
             ),
           );
         });
+  }
+
+  Widget _buildForm(Domain domain) {
+    return DomainForm(
+      domain,
+      submitCallback: submitCallback,
+      deleteCallback: deleteCallback,
+    );
   }
 }
 
 class DomainForm extends StatefulWidget {
   final Domain domain;
   final DomainCallback submitCallback;
-  final DomainCallback deleteCallback;
+  final DeleteCallback deleteCallback;
   const DomainForm(this.domain,
       {Key? key, required this.submitCallback, required this.deleteCallback})
       : super(key: key);
@@ -182,9 +183,57 @@ class DomainForm extends StatefulWidget {
 
 class _DomainFormState extends State<DomainForm> {
   final _formKey = GlobalKey<FormState>();
+  bool _loading = false;
 
-  @override
-  Widget build(BuildContext context) {
+  void _makeAPICall(DomainCallback callback) async {
+    setState(() {
+      _loading = true;
+    });
+    callback(widget.domain).then((v) {
+      setState(() {
+        _loading = false;
+      });
+    });
+  }
+
+  void submit() async {
+    _makeAPICall(widget.submitCallback);
+  }
+
+  void delete() async {
+    _makeAPICall(widget.deleteCallback);
+  }
+
+  Widget? _buildDesktopLoadingIndicator() {
+    if (Settings.env == Environments.mobile || !_loading) {
+      return null;
+    }
+    return const Expanded(child: Center(child: CircularProgressIndicator()));
+  }
+
+  Widget? _buildMobileLoadingIndicator() {
+    if (Settings.env == Environments.desktop || !_loading) {
+      return null;
+    }
+    return const CircularProgressIndicator();
+  }
+
+  Widget _buildButtonRow() {
+    List<Widget> widgets = [
+      GlassButton(onTap: submit, child: const Text('Submit')),
+      const Padding(padding: EdgeInsets.all(8.0)),
+      GlassButton(onTap: delete, red: true, child: const Text('Delete')),
+      const Padding(padding: EdgeInsets.symmetric(horizontal: 30.0)),
+    ];
+    final loadingIndicator = _buildMobileLoadingIndicator();
+    if (loadingIndicator != null) {
+      widgets.add(loadingIndicator);
+    }
+    return Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: widgets);
+  }
+
+  Form _buildForm() {
     return Form(
         key: _formKey,
         child: Column(
@@ -213,23 +262,21 @@ class _DomainFormState extends State<DomainForm> {
                 ],
               ),
             ),
-            Row(
-              children: [
-                GlassButton(
-                    onTap: () {
-                      widget.submitCallback(widget.domain);
-                    },
-                    child: const Text('Submit')),
-                const Padding(padding: EdgeInsets.all(8.0)),
-                GlassButton(
-                    onTap: () {
-                      widget.deleteCallback(widget.domain);
-                    },
-                    red: true,
-                    child: const Text('Delete')),
-              ],
-            ),
+            _buildButtonRow()
           ],
         ));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    List<Widget> widgets = [_buildForm()];
+    var loadingIndicator = _buildDesktopLoadingIndicator();
+    if (loadingIndicator != null) {
+      widgets.add(loadingIndicator);
+    }
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.start,
+      children: widgets,
+    );
   }
 }

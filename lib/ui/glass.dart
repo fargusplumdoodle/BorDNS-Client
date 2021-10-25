@@ -75,11 +75,13 @@ class GlassButton extends StatefulWidget {
   final VoidCallback onTap;
   final Widget child;
   final bool red;
+  final bool loading;
 
   const GlassButton({
     Key? key,
     required this.child,
     required this.onTap,
+    this.loading = false,
     this.red = false,
   }) : super(key: key);
 
@@ -121,6 +123,9 @@ class _GlassButtonState extends State<GlassButton> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.loading) {
+      return const CircularProgressIndicator();
+    }
     return GestureDetector(
         onTap: _onTap,
         child: Container(

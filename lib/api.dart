@@ -63,11 +63,40 @@ abstract class API {
     });
     return jsonDecode(r.body);
   }
+
+  Future<dynamic> _post(String endpoint, {Map<String, String>? qs}) async {
+    http.Response r =
+        await http.post(_getURI(endpoint, qs), headers: _getHeaders());
+
+    if (r.statusCode != 201) {
+      throw APIException(
+          message: "Failed to make API request",
+          endpoint: endpoint,
+          method: 'post',
+          qs: qs,
+          response: r);
+    }
+    developer.log("post", error: {
+      "status": r.statusCode,
+      "body": r.body,
+      "qs": qs,
+      "endpoint": endpoint
+    });
+    return jsonDecode(r.body);
+  }
 }
 
 class BorDnsAPI extends API {
   Future<List<Zone>> list() async {
     final data = await super._get("domain");
     return Serializer<Zone>().many(Zone.fromJSON, data);
+  }
+
+  Future<Domain> set(Domain domain) async {
+    final data = await super._post(
+      "fqdn",
+      qs: {'FQDN': domain.fqdn, 'IP': domain.ip},
+    );
+    return Domain.fromJSON(data);
   }
 }
