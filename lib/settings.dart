@@ -8,7 +8,6 @@ class Settings {
   static Environments env = determineEnvironments();
 
   static const String apiHost = String.fromEnvironment("API_HOST");
-  // TODO: STORE THESE LOCALLY
   static const String username = String.fromEnvironment("USERNAME");
   static const String password = String.fromEnvironment("PASSWORD");
 
@@ -29,8 +28,3 @@ class Settings {
     return desktop ? Environments.desktop : Environments.mobile;
   }
 }
-
-final routes = {
-  "OVERVIEW": "tmp",
-  "ADD": "ah",
-};

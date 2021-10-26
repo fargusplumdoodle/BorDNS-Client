@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 
 import '../settings.dart';
 import 'utils.dart';
 
 class Menu extends StatelessWidget {
-  final Map<String, String> items;
+  final List<String> items;
 
   const Menu({
     Key? key,
@@ -19,24 +18,21 @@ class Menu extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: _getDrawerLinks(context),
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: _getDrawerItems(context),
         ),
       ),
     );
   }
 
-  List<Widget> _getDrawerLinks(BuildContext context) {
-    List<Widget> links = [];
-    items.forEach((key, value) => links.add(ListTile(
-          title: Text(key),
-          onTap: () {
-            SchedulerBinding.instance!.addPostFrameCallback((_) {
-              Navigator.pushReplacementNamed(context, value);
-            });
-          },
-        )));
-    return links;
+  List<Widget> _getDrawerItems(BuildContext context) {
+    List<Widget> widgets = [];
+    for (var item in items) {
+      widgets.add(ListTile(
+        title: Text(item.toUpperCase()),
+      ));
+    }
+    return widgets;
   }
 }
 
@@ -67,23 +63,21 @@ class Screen {
   late Widget _body;
 
   Menu? menu;
+  List<String> menuItems;
   double menuWidthPercent = 0.2;
 
   Screen({
     required this.body,
     required this.context,
+    required this.menuItems,
     Key? key,
     this.appBar,
     this.floatingActionButton,
   }) {
-    menu = buildMenu();
+    menu = Menu(items: menuItems);
     appBar ??= getAppBar();
     _body = buildBody();
     drawer = buildDrawer();
-  }
-
-  Menu buildMenu() {
-    return Menu(items: routes);
   }
 
   Scaffold get() {

@@ -25,6 +25,7 @@ class LoadingScreen extends StatelessWidget {
 
 class MainScreen extends StatefulWidget {
   const MainScreen({Key? key}) : super(key: key);
+  static String route = '/';
 
   @override
   _MainScreenState createState() => _MainScreenState();
@@ -46,17 +47,21 @@ class _MainScreenState extends State<MainScreen> {
     setState(() {
       _zones = zones;
     });
-    await Future.delayed(Duration(seconds: 2)).then((_) {
-      return zones;
-    });
     return zones;
   }
 
   @override
   Widget build(BuildContext context) {
+    List<String> menuItems = [];
+    if (_zones != null) {
+      for (var element in _zones!) {
+        menuItems.add(element.name);
+      }
+    }
     return Screen(
       context: context,
       body: getBody(context),
+      menuItems: menuItems,
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.add),
         onPressed: () {
@@ -129,6 +134,7 @@ class _MainScreenState extends State<MainScreen> {
           return AlertDialog(
             content: SizedBox(
               height: 190,
+              width: BoxSize.varWidth(context, mobile: 0.9),
               child: _buildForm(domain, edit),
             ),
           );
@@ -257,22 +263,8 @@ class _DomainFormState extends State<DomainForm> {
     });
   }
 
-  Widget? _buildDesktopLoadingIndicator() {
-    if (Settings.env == Environments.mobile || !_loading) {
-      return null;
-    }
-    return const Expanded(child: Center(child: CircularProgressIndicator()));
-  }
-
-  Widget? _buildMobileLoadingIndicator() {
-    if (Settings.env == Environments.desktop || !_loading) {
-      return null;
-    }
-    return const CircularProgressIndicator();
-  }
-
   Widget _buildButtonRow(BuildContext context) {
-    List<Widget> widgets = [
+    return Row(mainAxisAlignment: MainAxisAlignment.start, children: [
       GlassButton(
           onTap: () {
             submit(context);
@@ -286,15 +278,7 @@ class _DomainFormState extends State<DomainForm> {
           red: true,
           disabled: !widget.edit,
           child: const Text('Delete')),
-      const Padding(padding: EdgeInsets.symmetric(horizontal: 30.0)),
-    ];
-
-    final loadingIndicator = _buildMobileLoadingIndicator();
-    if (loadingIndicator != null) {
-      widgets.add(loadingIndicator);
-    }
-    return Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: widgets);
+    ]);
   }
 
   Form _buildForm() {
@@ -333,14 +317,6 @@ class _DomainFormState extends State<DomainForm> {
 
   @override
   Widget build(BuildContext context) {
-    List<Widget> widgets = [_buildForm()];
-    var loadingIndicator = _buildDesktopLoadingIndicator();
-    if (loadingIndicator != null) {
-      widgets.add(loadingIndicator);
-    }
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.start,
-      children: widgets,
-    );
+    return _buildForm();
   }
 }
