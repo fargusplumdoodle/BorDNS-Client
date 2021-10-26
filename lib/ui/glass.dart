@@ -76,12 +76,14 @@ class GlassButton extends StatefulWidget {
   final Widget child;
   final bool red;
   final bool loading;
+  final bool disabled;
 
   const GlassButton({
     Key? key,
     required this.child,
     required this.onTap,
     this.loading = false,
+    this.disabled = false,
     this.red = false,
   }) : super(key: key);
 
@@ -98,9 +100,12 @@ class _GlassButtonState extends State<GlassButton> {
     });
     widget.onTap();
     Future.delayed(const Duration(milliseconds: 300)).then((value) => {
-          setState(() {
-            _pressed = false;
-          })
+          if (mounted)
+            {
+              setState(() {
+                _pressed = false;
+              })
+            }
         });
   }
 
@@ -126,6 +131,7 @@ class _GlassButtonState extends State<GlassButton> {
     if (widget.loading) {
       return const CircularProgressIndicator();
     }
+    // TODO: DISABLE BUTTON
     return GestureDetector(
         onTap: _onTap,
         child: Container(

@@ -26,7 +26,7 @@ class MyApp extends StatelessWidget {
           fontFamily: 'Ubuntu',
         ),
         themeMode: ThemeMode.dark,
-        home: const ZonesOverview());
+        home: const MainScreen());
   }
 }
 

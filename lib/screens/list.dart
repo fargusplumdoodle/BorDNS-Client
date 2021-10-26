@@ -6,41 +6,74 @@ import '../api.dart';
 import '../models.dart';
 import '../settings.dart';
 
-class ZonesOverview extends StatefulWidget {
-  const ZonesOverview({Key? key}) : super(key: key);
+typedef DetailCallback = void Function(
+  BuildContext context,
+  Domain domain,
+  bool edit,
+);
+typedef DomainCallback = Future<void> Function(Domain domain);
+typedef DeleteCallback = Future<bool> Function(Domain domain);
+
+class LoadingScreen extends StatelessWidget {
+  const LoadingScreen({Key? key}) : super(key: key);
 
   @override
-  _ZonesOverviewState createState() => _ZonesOverviewState();
+  Widget build(BuildContext context) {
+    return Container();
+  }
 }
 
-class _ZonesOverviewState extends State<ZonesOverview> with DomainDetail {
+class MainScreen extends StatefulWidget {
+  const MainScreen({Key? key}) : super(key: key);
+
+  @override
+  _MainScreenState createState() => _MainScreenState();
+}
+
+class _MainScreenState extends State<MainScreen> {
   bool loading = false;
-  late Future<List<Zone>> zones;
+  late Future<List<Zone>> _futureZones;
+  List<Zone>? _zones;
 
   @override
   void initState() {
     super.initState();
-    zones = fetchZones();
+    _futureZones = fetchZones();
   }
 
   Future<List<Zone>> fetchZones() async {
-    final api = BorDnsAPI();
-    return await api.list();
+    final zones = await BorDnsAPI().list();
+    setState(() {
+      _zones = zones;
+    });
+    await Future.delayed(Duration(seconds: 2)).then((_) {
+      return zones;
+    });
+    return zones;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Screen(context: context, body: getBody(context)).get();
+    return Screen(
+      context: context,
+      body: getBody(context),
+      floatingActionButton: FloatingActionButton(
+        child: const Icon(Icons.add),
+        onPressed: () {
+          showDetailCallback(context, Domain(fqdn: "", ip: ""), false);
+        },
+      ),
+    ).get();
   }
 
   Widget getBody(BuildContext context) {
     return FutureBuilder<List<Zone>>(
-        future: zones,
+        future: _futureZones,
         builder: (BuildContext context, AsyncSnapshot<List<Zone>> snapshot) {
           if (snapshot.hasData) {
             return ListZones(
-              zones: snapshot.data!,
-              detailCallback: super.showDetailCallback,
+              zones: _zones!,
+              detailCallback: showDetailCallback,
             );
           } else if (snapshot.hasError) {
             // TODO: GLOBAL ERRORS PLACE FOR ERRORS AND ERRORS
@@ -49,6 +82,66 @@ class _ZonesOverviewState extends State<ZonesOverview> with DomainDetail {
             return const Center(child: CircularProgressIndicator());
           }
         });
+  }
+
+  Future<void> submitCallback(Domain domain) async {
+    BorDnsAPI().set(domain).then((value) {
+      setState(() {
+        _futureZones = fetchZones();
+      });
+    });
+  }
+
+  Future<void> deleteCallback(Domain domain) async {
+    await BorDnsAPI().delete(domain).then((value) {
+      setState(() {
+        _futureZones = fetchZones();
+      });
+    });
+  }
+
+  void showDetailCallback(BuildContext context, Domain domain, bool edit) {
+    if (Settings.env == Environments.desktop) {
+      showDetailDesktop(context, domain, edit);
+    } else {
+      showDetailMobile(context, domain, edit);
+    }
+  }
+
+  void showDetailDesktop(BuildContext context, Domain domain, bool edit) {
+    showModalBottomSheet(
+        context: context,
+        builder: (BuildContext context) {
+          return SizedBox(
+            height: BoxSize.varHeight(context, desktop: 0.31),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: _buildForm(domain, edit),
+            ),
+          );
+        });
+  }
+
+  void showDetailMobile(BuildContext context, Domain domain, bool edit) {
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            content: SizedBox(
+              height: 190,
+              child: _buildForm(domain, edit),
+            ),
+          );
+        });
+  }
+
+  Widget _buildForm(Domain domain, bool edit) {
+    return DomainForm(
+      domain,
+      submitCallback: submitCallback,
+      deleteCallback: deleteCallback,
+      edit: edit,
+    );
   }
 }
 
@@ -84,7 +177,7 @@ class _ListZonesState extends State<ListZones> {
         padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
         child: GestureDetector(
           onTap: () {
-            widget.detailCallback(context, domain);
+            widget.detailCallback(context, domain, true);
           },
           child: FrostedGlassBox(
               width: BoxSize.varWidth(context, base: 0.9),
@@ -109,72 +202,16 @@ class _ListZonesState extends State<ListZones> {
   }
 }
 
-typedef DetailCallback = void Function(BuildContext context, Domain domain);
-typedef DomainCallback = Future<void> Function(Domain domain);
-typedef DeleteCallback = Future<bool> Function(Domain domain);
-
-mixin DomainDetail on State<ZonesOverview> {
-  Future<void> submitCallback(Domain domain) async {
-    BorDnsAPI().set(domain);
-  }
-
-  Future<bool> deleteCallback(Domain domain) async {
-    print('waiting');
-    await Future.delayed(const Duration(seconds: 3));
-    print('done');
-    return true;
-  }
-
-  void showDetailCallback(BuildContext context, Domain domain) {
-    if (Settings.env == Environments.desktop) {
-      showDetailDesktop(context, domain);
-    } else {
-      showDetailMobile(context, domain);
-    }
-  }
-
-  void showDetailDesktop(BuildContext context, Domain domain) {
-    showModalBottomSheet(
-        context: context,
-        builder: (BuildContext context) {
-          return SizedBox(
-            height: BoxSize.varHeight(context, desktop: 0.3),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: _buildForm(domain),
-            ),
-          );
-        });
-  }
-
-  void showDetailMobile(BuildContext context, Domain domain) {
-    showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            content: SizedBox(
-              height: 190,
-              child: _buildForm(domain),
-            ),
-          );
-        });
-  }
-
-  Widget _buildForm(Domain domain) {
-    return DomainForm(
-      domain,
-      submitCallback: submitCallback,
-      deleteCallback: deleteCallback,
-    );
-  }
-}
-
 class DomainForm extends StatefulWidget {
   final Domain domain;
   final DomainCallback submitCallback;
-  final DeleteCallback deleteCallback;
+  final DomainCallback deleteCallback;
+  final bool edit;
   const DomainForm(this.domain,
-      {Key? key, required this.submitCallback, required this.deleteCallback})
+      {Key? key,
+      required this.submitCallback,
+      required this.deleteCallback,
+      required this.edit})
       : super(key: key);
 
   @override
@@ -184,24 +221,40 @@ class DomainForm extends StatefulWidget {
 class _DomainFormState extends State<DomainForm> {
   final _formKey = GlobalKey<FormState>();
   bool _loading = false;
+  late final _formDomain = Domain(
+    ip: widget.domain.ip,
+    fqdn: widget.domain.fqdn,
+  );
 
-  void _makeAPICall(DomainCallback callback) async {
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  Future<void> _makeAPICall(Domain domain, DomainCallback callback) async {
     setState(() {
       _loading = true;
     });
-    callback(widget.domain).then((v) {
-      setState(() {
-        _loading = false;
-      });
+    callback(domain);
+  }
+
+  void submit(context) {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+    _formKey.currentState!.save();
+    if (widget.edit) {
+      _makeAPICall(widget.domain, widget.deleteCallback);
+    }
+    _makeAPICall(_formDomain, widget.submitCallback).then((_) {
+      Navigator.of(context).pop();
     });
   }
 
-  void submit() async {
-    _makeAPICall(widget.submitCallback);
-  }
-
-  void delete() async {
-    _makeAPICall(widget.deleteCallback);
+  void delete(context) {
+    _makeAPICall(widget.domain, widget.deleteCallback).then((_) {
+      Navigator.of(context).pop();
+    });
   }
 
   Widget? _buildDesktopLoadingIndicator() {
@@ -218,13 +271,24 @@ class _DomainFormState extends State<DomainForm> {
     return const CircularProgressIndicator();
   }
 
-  Widget _buildButtonRow() {
+  Widget _buildButtonRow(BuildContext context) {
     List<Widget> widgets = [
-      GlassButton(onTap: submit, child: const Text('Submit')),
+      GlassButton(
+          onTap: () {
+            submit(context);
+          },
+          child: const Text('Submit')),
       const Padding(padding: EdgeInsets.all(8.0)),
-      GlassButton(onTap: delete, red: true, child: const Text('Delete')),
+      GlassButton(
+          onTap: () {
+            delete(context);
+          },
+          red: true,
+          disabled: !widget.edit,
+          child: const Text('Delete')),
       const Padding(padding: EdgeInsets.symmetric(horizontal: 30.0)),
     ];
+
     final loadingIndicator = _buildMobileLoadingIndicator();
     if (loadingIndicator != null) {
       widgets.add(loadingIndicator);
@@ -249,20 +313,20 @@ class _DomainFormState extends State<DomainForm> {
                       initialValue: widget.domain.fqdn,
                       onSaved: (value) {
                         setState(() {
-                          widget.domain.fqdn = value!;
+                          _formDomain.fqdn = value!;
                         });
                       }),
                   IPFormField(
                       initialValue: widget.domain.ip,
                       onSaved: (value) {
                         setState(() {
-                          widget.domain.ip = value!;
+                          _formDomain.ip = value!;
                         });
                       }),
                 ],
               ),
             ),
-            _buildButtonRow()
+            _buildButtonRow(context)
           ],
         ));
   }

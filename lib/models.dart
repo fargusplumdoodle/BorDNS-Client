@@ -18,8 +18,9 @@ class Serializer<T extends Model> {
 class Domain implements Model {
   String ip;
   String fqdn;
+  String? zone;
 
-  Domain({required this.ip, required this.fqdn});
+  Domain({required this.ip, required this.fqdn, this.zone});
 
   static Domain fromJSON(dynamic json) {
     return Domain(ip: json['ip'], fqdn: json['fqdn']);
@@ -27,7 +28,7 @@ class Domain implements Model {
 
   @override
   String toString() {
-    return "$fqdn: $ip";
+    return "<$fqdn: $ip>";
   }
 }
 
@@ -39,12 +40,19 @@ class Zone implements Model {
 
   static Zone fromJSON(dynamic json) {
     final s = Serializer<Domain>();
-    return Zone(
-        name: json['zone'], domains: s.many(Domain.fromJSON, json['domains']));
+    final zone = Zone(
+      name: json['zone'],
+      domains: s.many(Domain.fromJSON, json['domains']),
+    );
+
+    for (var domain in zone.domains) {
+      domain.zone = zone.name;
+    }
+    return zone;
   }
 
   @override
   String toString() {
-    return name;
+    return '<zone: $name>';
   }
 }

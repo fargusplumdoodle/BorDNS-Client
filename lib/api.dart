@@ -43,46 +43,73 @@ abstract class API {
     return Uri.http(Settings.apiHost, endpoint, qs);
   }
 
-  Future<dynamic> _get(String endpoint, {Map<String, String>? qs}) async {
-    http.Response r =
-        await http.get(_getURI(endpoint, qs), headers: _getHeaders());
-
-    if (r.statusCode != 200) {
+  dynamic _processResponse({
+    required http.Response r,
+    required String endpoint,
+    required Map<String, String>? qs,
+    required String method,
+    required int expectedResponse,
+    required bool decode,
+  }) {
+    if (r.statusCode != expectedResponse) {
       throw APIException(
           message: "Failed to make API request",
           endpoint: endpoint,
-          method: 'get',
+          method: method,
           qs: qs,
           response: r);
     }
-    developer.log("get", error: {
+    developer.log(method, error: {
       "status": r.statusCode,
       "body": r.body,
       "qs": qs,
       "endpoint": endpoint
     });
-    return jsonDecode(r.body);
+    if (decode) {
+      return jsonDecode(r.body);
+    }
+    return r.body;
+  }
+
+  Future<dynamic> _get(String endpoint, {Map<String, String>? qs}) async {
+    http.Response r =
+        await http.get(_getURI(endpoint, qs), headers: _getHeaders());
+    return _processResponse(
+      decode: true,
+      r: r,
+      endpoint: endpoint,
+      qs: qs,
+      method: "get",
+      expectedResponse: 200,
+    );
   }
 
   Future<dynamic> _post(String endpoint, {Map<String, String>? qs}) async {
     http.Response r =
         await http.post(_getURI(endpoint, qs), headers: _getHeaders());
 
-    if (r.statusCode != 201) {
-      throw APIException(
-          message: "Failed to make API request",
-          endpoint: endpoint,
-          method: 'post',
-          qs: qs,
-          response: r);
-    }
-    developer.log("post", error: {
-      "status": r.statusCode,
-      "body": r.body,
-      "qs": qs,
-      "endpoint": endpoint
-    });
-    return jsonDecode(r.body);
+    return _processResponse(
+      decode: true,
+      r: r,
+      endpoint: endpoint,
+      qs: qs,
+      method: "post",
+      expectedResponse: 201,
+    );
+  }
+
+  Future<dynamic> _delete(String endpoint, {Map<String, String>? qs}) async {
+    http.Response r =
+        await http.delete(_getURI(endpoint, qs), headers: _getHeaders());
+
+    return _processResponse(
+      r: r,
+      endpoint: endpoint,
+      qs: qs,
+      method: "delete",
+      expectedResponse: 201,
+      decode: false,
+    );
   }
 }
 
@@ -98,5 +125,9 @@ class BorDnsAPI extends API {
       qs: {'FQDN': domain.fqdn, 'IP': domain.ip},
     );
     return Domain.fromJSON(data);
+  }
+
+  Future<void> delete(Domain domain) async {
+    await super._delete("fqdn", qs: {'FQDN': domain.fqdn});
   }
 }
