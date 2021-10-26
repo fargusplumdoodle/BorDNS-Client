@@ -50,8 +50,7 @@ class Body extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
           image: DecorationImage(
-              image: Image.asset(img('background.png')).image,
-              fit: BoxFit.cover)),
+              image: Image.asset(img('blue.png')).image, fit: BoxFit.cover)),
       child: child,
     );
   }

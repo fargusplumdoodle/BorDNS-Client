@@ -23,8 +23,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/
-    - assets/desktop/
-    - assets/mobile/
+    - assets/buttons/
 
   fonts:
     - family: Ubuntu

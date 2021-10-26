@@ -95,6 +95,9 @@ class _GlassButtonState extends State<GlassButton> {
   bool _pressed = false;
 
   void _onTap() {
+    if (widget.disabled) {
+      return;
+    }
     setState(() {
       _pressed = true;
     });
@@ -110,10 +113,15 @@ class _GlassButtonState extends State<GlassButton> {
   }
 
   ImageProvider _getBackgroundImage() {
-    if (widget.red) {
-      return Image.asset(img('red-gradient.png')).image;
+    String path = "buttons/";
+    if (widget.disabled) {
+      path += 'disabled.png';
+    } else if (widget.red) {
+      path += 'red.png';
+    } else {
+      path += 'blue.png';
     }
-    return Image.asset(img('background.png')).image;
+    return Image.asset(img(path)).image;
   }
 
   Widget _getChild() {
