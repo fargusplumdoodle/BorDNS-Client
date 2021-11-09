@@ -11,7 +11,9 @@ typedef DetailCallback = void Function(
   Domain domain,
   bool edit,
 );
-typedef DomainCallback = Future<void> Function(Domain domain);
+typedef DomainDeleteCallback = Future<void> Function(Domain domain);
+typedef DomainSubmitCallback = Future<void> Function(
+    {required Domain domain, required Domain old});
 typedef DeleteCallback = Future<bool> Function(Domain domain);
 
 class LoadingScreen extends StatelessWidget {
@@ -64,8 +66,8 @@ class _MainScreenState extends State<MainScreen> with Base<MainScreen> {
   Widget body(BuildContext context) {
     menuItems.clear();
     if (_zones != null) {
+      menuItems.clear();
       setState(() {
-        menuItems.clear();
         for (var element in _zones!) {
           menuItems.add(element.name);
         }
@@ -80,7 +82,6 @@ class _MainScreenState extends State<MainScreen> with Base<MainScreen> {
               detailCallback: showDetailCallback,
             );
           } else if (snapshot.hasError) {
-            // TODO: GLOBAL ERRORS PLACE FOR ERRORS AND ERRORS
             return Center(child: Text(snapshot.error.toString()));
           } else {
             return const Center(child: CircularProgressIndicator());
@@ -88,11 +89,15 @@ class _MainScreenState extends State<MainScreen> with Base<MainScreen> {
         });
   }
 
-  Future<void> submitCallback(Domain domain) async {
-    BorDnsAPI().set(domain).then((value) {
+  Future<void> submitCallback(
+      {required Domain domain, required Domain old}) async {
+    BorDnsAPI().set(domain: domain, old: old).then((_) {
       setState(() {
         _futureZones = fetchZones();
       });
+      addNotification(const SuccessNotification("Updated"));
+    }).catchError((err) {
+      addNotification(ErrorNotification(err.toString()));
     });
   }
 
@@ -101,6 +106,9 @@ class _MainScreenState extends State<MainScreen> with Base<MainScreen> {
       setState(() {
         _futureZones = fetchZones();
       });
+      addNotification(const SuccessNotification("Deleted"));
+    }).catchError((err) {
+      addNotification(ErrorNotification(err.toString()));
     });
   }
 
@@ -209,8 +217,8 @@ class _ListZonesState extends State<ListZones> {
 
 class DomainForm extends StatefulWidget {
   final Domain domain;
-  final DomainCallback submitCallback;
-  final DomainCallback deleteCallback;
+  final DomainSubmitCallback submitCallback;
+  final DomainDeleteCallback deleteCallback;
   final bool edit;
   const DomainForm(this.domain,
       {Key? key,
@@ -225,7 +233,6 @@ class DomainForm extends StatefulWidget {
 
 class _DomainFormState extends State<DomainForm> {
   final _formKey = GlobalKey<FormState>();
-  bool _loading = false;
   late final _formDomain = Domain(
     ip: widget.domain.ip,
     fqdn: widget.domain.fqdn,
@@ -236,28 +243,18 @@ class _DomainFormState extends State<DomainForm> {
     super.initState();
   }
 
-  Future<void> _makeAPICall(Domain domain, DomainCallback callback) async {
-    setState(() {
-      _loading = true;
-    });
-    callback(domain);
-  }
-
   void submit(context) {
     if (!_formKey.currentState!.validate()) {
       return;
     }
     _formKey.currentState!.save();
-    if (widget.edit) {
-      _makeAPICall(widget.domain, widget.deleteCallback);
-    }
-    _makeAPICall(_formDomain, widget.submitCallback).then((_) {
+    widget.submitCallback(domain: _formDomain, old: widget.domain).then((_) {
       Navigator.of(context).pop();
     });
   }
 
   void delete(context) {
-    _makeAPICall(widget.domain, widget.deleteCallback).then((_) {
+    widget.deleteCallback(widget.domain).then((_) {
       Navigator.of(context).pop();
     });
   }

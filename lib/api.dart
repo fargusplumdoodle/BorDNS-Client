@@ -27,6 +27,10 @@ class APIException {
       "endpoint": endpoint
     });
   }
+  @override
+  String toString() {
+    return message;
+  }
 }
 
 abstract class API {
@@ -53,7 +57,7 @@ abstract class API {
   }) {
     if (r.statusCode != expectedResponse) {
       throw APIException(
-          message: "Failed to make API request",
+          message: "Failed to make API request: ${r.body}",
           endpoint: endpoint,
           method: method,
           qs: qs,
@@ -119,7 +123,10 @@ class BorDnsAPI extends API {
     return Serializer<Zone>().many(Zone.fromJSON, data);
   }
 
-  Future<Domain> set(Domain domain) async {
+  Future<Domain> set({required Domain domain, required Domain old}) async {
+    if (old.fqdn != '') {
+      await super._delete("fqdn", qs: {'FQDN': old.fqdn});
+    }
     final data = await super._post(
       "fqdn",
       qs: {'FQDN': domain.fqdn, 'IP': domain.ip},

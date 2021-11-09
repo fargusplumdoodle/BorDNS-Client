@@ -1,3 +1,4 @@
+import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 
 import '../settings.dart';
@@ -26,7 +27,12 @@ mixin Base<T extends StatefulWidget> on State<T> {
 
   Widget _buildBody(BuildContext context) {
     if (Settings.env == Environments.mobile) {
-      return _formatBody(child: body(context));
+      return Stack(children: [
+        _formatBody(child: body(context)),
+        Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: notifications)
+      ]);
     }
     var size = MediaQuery.of(context).size;
     final menuWidth = size.width * menuWidthPercent;
@@ -39,7 +45,8 @@ mixin Base<T extends StatefulWidget> on State<T> {
             child: SizedBox(
                 width: bodyWidth, height: size.height, child: body(context)))
       ]),
-      ..._getNotifications(context)
+      Column(
+          crossAxisAlignment: CrossAxisAlignment.start, children: notifications)
     ]);
   }
 
@@ -74,18 +81,6 @@ mixin Base<T extends StatefulWidget> on State<T> {
     });
   }
 
-  List<Widget> _getNotifications(BuildContext context) {
-    // Removes expired notifications from list
-    List<Widget> widgets = [];
-    // TODO: REMOVE EXPIRED NOTIFICATIONS
-    for (var notification in notifications) {
-      if (!notification.expired) {
-        widgets.add(notification.build(context));
-      }
-    }
-    return widgets;
-  }
-
   // MENU
   Widget _getMenu() {
     return Container(
@@ -111,85 +106,6 @@ mixin Base<T extends StatefulWidget> on State<T> {
   }
 }
 
-/*
-
-class Screen {
-  Widget body;
-  BuildContext context;
-
-  Key? key;
-  PreferredSizeWidget? appBar;
-  Widget? floatingActionButton;
-  Widget? drawer;
-  late Widget _body;
-
-  List<Notification> notifications = [];
-
-  Menu? menu;
-  List<String> menuItems;
-  double menuWidthPercent = 0.2;
-
-  Screen({
-    required this.body,
-    required this.context,
-    required this.menuItems,
-    required this.notifications,
-    Key? key,
-    this.appBar,
-    this.floatingActionButton,
-  }) {
-    menu = Menu(items: menuItems);
-    appBar ??= getAppBar();
-    _body = buildBody();
-    drawer = buildDrawer();
-  }
-
-  Scaffold get() {
-    return Scaffold(
-        appBar: appBar,
-        body: _body,
-        floatingActionButton: floatingActionButton,
-        drawer: drawer);
-  }
-
-  AppBar getAppBar() {
-    return AppBar(
-      title: const Text("BorDNS"),
-    );
-  }
-
-  Widget buildBody() {
-    if (Settings.env == Environments.mobile) {
-      return Body(child: body);
-    }
-    var size = MediaQuery.of(context).size;
-    final menuWidth = size.width * menuWidthPercent;
-    final bodyWidth = size.width - menuWidth;
-
-    return Stack(
-      children: [
-        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          SizedBox(width: menuWidth, height: size.height, child: menu!),
-          Body(
-              child:
-                  SizedBox(width: bodyWidth, height: size.height, child: body))
-        ]),
-        BorNotification(),
-      ],
-    );
-  }
-
-  Widget? buildDrawer() {
-    if (Settings.env == Environments.mobile) {
-      return Drawer(
-        child: menu,
-      );
-    }
-    return null;
-  }
-}
-
- */
 class Header extends Text {
   const Header(String data, {Key? key})
       : super(data,
@@ -261,24 +177,71 @@ class BoxSize {
   }
 }
 
-class BorNotification {
-  // TODO KEEP TRACK OF TIME IN EXISTENCE, SET EXPIRED
-  bool expired = false;
+class ErrorNotification extends BorNotification {
+  const ErrorNotification(String text, {Key? key})
+      : super(
+            text: text,
+            color: Colors.red,
+            icon: Icons.error,
+            key: key,
+            width: 1);
+}
+
+class SuccessNotification extends BorNotification {
+  const SuccessNotification(String text, {Key? key})
+      : super(text: text, color: Colors.green, icon: Icons.done, key: key);
+}
+
+class BorNotification extends StatefulWidget {
   final String text;
+  final MaterialColor color;
+  final IconData icon;
+  final double width;
 
-  BorNotification(this.text);
+  const BorNotification({
+    Key? key,
+    required this.text,
+    this.color = Colors.green,
+    this.icon = Icons.add,
+    this.width = 0.3,
+  }) : super(key: key);
 
+  @override
+  _BorNotificationState createState() => _BorNotificationState();
+}
+
+class _BorNotificationState extends State<BorNotification> {
+  bool expired = false;
+  static const int _timeToLive = 5; // seconds
+
+  @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Container(
-          color: Colors.green,
-          child: Row(
-            children: [
-              const Icon(Icons.add),
-              Text(text),
-            ],
-          )),
+    Future.delayed(const Duration(seconds: _timeToLive)).then((_) => {
+          setState(() {
+            expired = true;
+          })
+        });
+    if (expired) {
+      return Container();
+    }
+
+    return BounceInDown(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Container(
+            color: widget.color,
+            width: BoxSize.varWidth(context, desktop: widget.width, mobile: 1),
+            child: Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Icon(widget.icon),
+                  Flexible(child: PText(widget.text)),
+                ],
+              ),
+            )),
+      ),
     );
   }
 }

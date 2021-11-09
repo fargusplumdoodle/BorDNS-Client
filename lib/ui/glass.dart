@@ -139,7 +139,6 @@ class _GlassButtonState extends State<GlassButton> {
     if (widget.loading) {
       return const CircularProgressIndicator();
     }
-    // TODO: DISABLE BUTTON
     return GestureDetector(
         onTap: _onTap,
         child: Container(
