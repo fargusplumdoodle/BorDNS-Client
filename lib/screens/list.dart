@@ -31,7 +31,7 @@ class MainScreen extends StatefulWidget {
   _MainScreenState createState() => _MainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen> {
+class _MainScreenState extends State<MainScreen> with Base<MainScreen> {
   bool loading = false;
   late Future<List<Zone>> _futureZones;
   List<Zone>? _zones;
@@ -51,27 +51,26 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    List<String> menuItems = [];
-    if (_zones != null) {
-      for (var element in _zones!) {
-        menuItems.add(element.name);
-      }
-    }
-    return Screen(
-      context: context,
-      body: getBody(context),
-      menuItems: menuItems,
-      floatingActionButton: FloatingActionButton(
-        child: const Icon(Icons.add),
-        onPressed: () {
-          showDetailCallback(context, Domain(fqdn: "", ip: ""), false);
-        },
-      ),
-    ).get();
+  FloatingActionButton floatingActionButton(BuildContext context) {
+    return FloatingActionButton(
+      child: const Icon(Icons.add),
+      onPressed: () {
+        showDetailCallback(context, Domain(fqdn: "", ip: ""), false);
+      },
+    );
   }
 
-  Widget getBody(BuildContext context) {
+  @override
+  Widget body(BuildContext context) {
+    menuItems.clear();
+    if (_zones != null) {
+      setState(() {
+        menuItems.clear();
+        for (var element in _zones!) {
+          menuItems.add(element.name);
+        }
+      });
+    }
     return FutureBuilder<List<Zone>>(
         future: _futureZones,
         builder: (BuildContext context, AsyncSnapshot<List<Zone>> snapshot) {

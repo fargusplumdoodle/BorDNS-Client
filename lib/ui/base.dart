@@ -3,31 +3,106 @@ import 'package:flutter/material.dart';
 import '../settings.dart';
 import 'utils.dart';
 
-class Menu extends StatelessWidget {
-  final List<String> items;
+mixin Base<T extends StatefulWidget> on State<T> {
+  final List<BorNotification> notifications = [];
 
-  const Menu({
-    Key? key,
-    required this.items,
-  }) : super(key: key);
+  double menuWidthPercent = 0.2;
+  final List<String> menuItems = [];
 
+  // OVERWRITE THESE
+  body(BuildContext context) {}
+  floatingActionButton(BuildContext context) {}
+
+  // BASE METHODS
   @override
   Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: _getAppBar(),
+      body: _buildBody(context),
+      floatingActionButton: floatingActionButton(context),
+      drawer: _getDrawer(),
+    );
+  }
+
+  Widget _buildBody(BuildContext context) {
+    if (Settings.env == Environments.mobile) {
+      return _formatBody(child: body(context));
+    }
+    var size = MediaQuery.of(context).size;
+    final menuWidth = size.width * menuWidthPercent;
+    final bodyWidth = size.width - menuWidth;
+
+    return Stack(children: [
+      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+        SizedBox(width: menuWidth, height: size.height, child: _getMenu()),
+        _formatBody(
+            child: SizedBox(
+                width: bodyWidth, height: size.height, child: body(context)))
+      ]),
+      ..._getNotifications(context)
+    ]);
+  }
+
+  Widget _formatBody({required Widget child}) {
+    return Container(
+      decoration: BoxDecoration(
+          image: DecorationImage(
+              image: Image.asset(img('blue.png')).image, fit: BoxFit.cover)),
+      child: child,
+    );
+  }
+
+  AppBar _getAppBar() {
+    return AppBar(
+      title: const Text("BorDNS"),
+    );
+  }
+
+  Widget? _getDrawer() {
+    if (Settings.env == Environments.mobile) {
+      return Drawer(
+        child: _getMenu(),
+      );
+    }
+    return null;
+  }
+
+  // NOTIFICATIONS
+  void addNotification(BorNotification notification) {
+    setState(() {
+      notifications.add(notification);
+    });
+  }
+
+  List<Widget> _getNotifications(BuildContext context) {
+    // Removes expired notifications from list
+    List<Widget> widgets = [];
+    // TODO: REMOVE EXPIRED NOTIFICATIONS
+    for (var notification in notifications) {
+      if (!notification.expired) {
+        widgets.add(notification.build(context));
+      }
+    }
+    return widgets;
+  }
+
+  // MENU
+  Widget _getMenu() {
     return Container(
       color: const Color(0x00161616),
       child: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.end,
-          children: _getDrawerItems(context),
+          children: _buildMenuItems(),
         ),
       ),
     );
   }
 
-  List<Widget> _getDrawerItems(BuildContext context) {
+  List<Widget> _buildMenuItems() {
     List<Widget> widgets = [];
-    for (var item in items) {
+    for (var item in menuItems) {
       widgets.add(ListTile(
         title: Text(item.toUpperCase()),
       ));
@@ -36,21 +111,7 @@ class Menu extends StatelessWidget {
   }
 }
 
-class Body extends StatelessWidget {
-  final Widget child;
-
-  const Body({required this.child, Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-          image: DecorationImage(
-              image: Image.asset(img('blue.png')).image, fit: BoxFit.cover)),
-      child: child,
-    );
-  }
-}
+/*
 
 class Screen {
   Widget body;
@@ -62,6 +123,8 @@ class Screen {
   Widget? drawer;
   late Widget _body;
 
+  List<Notification> notifications = [];
+
   Menu? menu;
   List<String> menuItems;
   double menuWidthPercent = 0.2;
@@ -70,6 +133,7 @@ class Screen {
     required this.body,
     required this.context,
     required this.menuItems,
+    required this.notifications,
     Key? key,
     this.appBar,
     this.floatingActionButton,
@@ -102,10 +166,17 @@ class Screen {
     final menuWidth = size.width * menuWidthPercent;
     final bodyWidth = size.width - menuWidth;
 
-    return Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-      SizedBox(width: menuWidth, height: size.height, child: menu!),
-      Body(child: SizedBox(width: bodyWidth, height: size.height, child: body))
-    ]);
+    return Stack(
+      children: [
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+          SizedBox(width: menuWidth, height: size.height, child: menu!),
+          Body(
+              child:
+                  SizedBox(width: bodyWidth, height: size.height, child: body))
+        ]),
+        BorNotification(),
+      ],
+    );
   }
 
   Widget? buildDrawer() {
@@ -118,6 +189,7 @@ class Screen {
   }
 }
 
+ */
 class Header extends Text {
   const Header(String data, {Key? key})
       : super(data,
@@ -185,6 +257,28 @@ class BoxSize {
       base: base,
       desktop: desktop,
       mobile: mobile,
+    );
+  }
+}
+
+class BorNotification {
+  // TODO KEEP TRACK OF TIME IN EXISTENCE, SET EXPIRED
+  bool expired = false;
+  final String text;
+
+  BorNotification(this.text);
+
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Container(
+          color: Colors.green,
+          child: Row(
+            children: [
+              const Icon(Icons.add),
+              Text(text),
+            ],
+          )),
     );
   }
 }
