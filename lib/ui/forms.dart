@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 
+typedef SubmitFunc = void Function(String s);
+
 class DomainFormField extends TextFormField {
   DomainFormField({
     Key? key,
     required String initialValue,
     required FormFieldSetter<String> onSaved,
+    required SubmitFunc onFieldSubmitted,
   }) : super(
           key: key,
           initialValue: initialValue,
+          onFieldSubmitted: onFieldSubmitted,
           onSaved: onSaved,
           decoration: const InputDecoration(labelText: "Domain"),
           keyboardType: TextInputType.text,
@@ -25,9 +29,11 @@ class IPFormField extends TextFormField {
     Key? key,
     required String initialValue,
     required FormFieldSetter<String> onSaved,
+    required SubmitFunc onFieldSubmitted,
   }) : super(
           key: key,
           initialValue: initialValue,
+          onFieldSubmitted: onFieldSubmitted,
           onSaved: onSaved,
           decoration: const InputDecoration(labelText: "IP Address"),
           keyboardType: TextInputType.text,

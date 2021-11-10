@@ -291,6 +291,9 @@ class _DomainFormState extends State<DomainForm> {
                 children: [
                   DomainFormField(
                       initialValue: widget.domain.fqdn,
+                      onFieldSubmitted: (_) {
+                        submit(context);
+                      },
                       onSaved: (value) {
                         setState(() {
                           _formDomain.fqdn = value!;
@@ -298,6 +301,9 @@ class _DomainFormState extends State<DomainForm> {
                       }),
                   IPFormField(
                       initialValue: widget.domain.ip,
+                      onFieldSubmitted: (_) {
+                        submit(context);
+                      },
                       onSaved: (value) {
                         setState(() {
                           _formDomain.ip = value!;
